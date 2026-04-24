@@ -8,7 +8,36 @@ const FALLBACK: FunnelMetrics = {
   source: "fallback",
 };
 
+function parseEnvInt(val: string | undefined): number | null {
+  if (!val) return null;
+  const n = parseInt(val, 10);
+  return isNaN(n) ? null : n;
+}
+
 export async function getFunnelMetrics(): Promise<FunnelMetrics> {
+  // Manual override — set these env vars in Vercel to skip the service account requirement.
+  // Update them whenever you pull a fresh GA4 report.
+  const manualSessions = parseEnvInt(process.env.GA4_SESSIONS);
+  const manualBasket = parseEnvInt(process.env.GA4_ADD_TO_BASKET);
+  const manualCheckouts = parseEnvInt(process.env.GA4_CHECKOUTS);
+  const manualPurchases = parseEnvInt(process.env.GA4_PURCHASES);
+
+  if (
+    manualSessions !== null &&
+    manualBasket !== null &&
+    manualCheckouts !== null &&
+    manualPurchases !== null
+  ) {
+    return {
+      sessions: manualSessions,
+      addToBasket: manualBasket,
+      checkouts: manualCheckouts,
+      purchases: manualPurchases,
+      source: "live",
+    };
+  }
+
+  // Service account path (requires GA4_CREDENTIALS + GA4_PROPERTY_ID)
   const credentials = process.env.GA4_CREDENTIALS;
   const propertyId = process.env.GA4_PROPERTY_ID;
 
